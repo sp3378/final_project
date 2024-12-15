@@ -21,7 +21,7 @@ Key Highlights:
 from builtins import dict, int, len, str
 from datetime import timedelta
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, Response, status, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status, Request
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.dependencies import get_current_user, get_db, get_email_service, require_role
@@ -33,6 +33,8 @@ from app.services.jwt_service import create_access_token
 from app.utils.link_generation import create_user_links, generate_pagination_links
 from app.dependencies import get_settings
 from app.services.email_service import EmailService
+from app.schemas.search_schemas import UserSearchParams
+from app.models.user_model import User
 router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 settings = get_settings()
@@ -245,3 +247,54 @@ async def verify_email(user_id: UUID, token: str, db: AsyncSession = Depends(get
     if await UserService.verify_email_with_token(db, user_id, token):
         return {"message": "Email verified successfully"}
     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired verification token")
+
+@router.get("/users/search/", response_model=UserListResponse, name="search_users", 
+           tags=["User Management Requires (Admin or Manager Roles)"])
+async def search_users(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(require_role(["ADMIN", "MANAGER"])),
+    params: UserSearchParams = Depends(),
+    skip: int = Query(0, description="Number of items to skip"),
+    limit: int = Query(10, description="Number of items to return")
+):
+    """
+    Search for users based on various criteria.
+    - **search_term**: Search in email, nickname, first name, and last name
+    - **role**: Filter by user role
+    - **is_locked**: Filter by account lock status
+    - **is_verified**: Filter by email verification status
+    - **registration_start**: Filter by registration date start
+    - **registration_end**: Filter by registration date end
+    """
+    users = await User.search(
+        session=db,
+        search_term=params.search_term,
+        role=params.role,
+        is_locked=params.is_locked,
+        is_verified=params.is_verified,
+        registration_start=params.registration_start,
+        registration_end=params.registration_end
+    )
+
+    # Apply pagination
+    total_users = len(users)
+    paginated_users = users[skip:skip + limit]
+
+    # Create response with HATEOAS links
+    user_responses = [
+        UserResponse(
+            **user.__dict__,
+            links=create_user_links(user.id, request)
+        ) for user in paginated_users
+    ]
+
+    pagination_links = generate_pagination_links(request, skip, limit, total_users)
+
+    return UserListResponse(
+        items=user_responses,
+        total=total_users,
+        page=skip // limit + 1,
+        size=len(user_responses),
+        links=pagination_links
+    )

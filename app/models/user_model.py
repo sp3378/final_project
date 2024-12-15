@@ -1,13 +1,16 @@
 from builtins import bool, int, str
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 import uuid
 from sqlalchemy import (
-    Column, String, Integer, DateTime, Boolean, func, Enum as SQLAlchemyEnum
+    Column, String, Integer, DateTime, Boolean, func, Enum as SQLAlchemyEnum, or_
 )
 from sqlalchemy.dialects.postgresql import UUID, ENUM
 from sqlalchemy.orm import Mapped, mapped_column
 from app.database import Base
+from typing import Optional, List
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql import select
 
 class UserRole(Enum):
     """Enumeration of user roles within the application, stored as ENUM in the database."""
@@ -74,6 +77,20 @@ class User(Base):
     email_verified: Mapped[bool] = Column(Boolean, default=False, nullable=False)
     hashed_password: Mapped[str] = Column(String(255), nullable=False)
 
+    @property
+    def professional_status_updated_at(self) -> Optional[datetime]:
+        """Get the timestamp of the last professional status update."""
+        return self._professional_status_updated_at
+
+    @professional_status_updated_at.setter
+    def professional_status_updated_at(self, value: datetime):
+        """Set the timestamp of the last professional status update."""
+        self._professional_status_updated_at = value
+
+    def update_professional_status(self, is_professional: bool):
+        """Update the professional status and set the timestamp."""
+        self.is_professional = is_professional
+        self.professional_status_updated_at = datetime.now(timezone.utc)
 
     def __repr__(self) -> str:
         """Provides a readable representation of a user object."""
@@ -91,7 +108,45 @@ class User(Base):
     def has_role(self, role_name: UserRole) -> bool:
         return self.role == role_name
 
-    def update_professional_status(self, status: bool):
-        """Updates the professional status and logs the update time."""
-        self.is_professional = status
-        self.professional_status_updated_at = func.now()
+    @classmethod
+    async def search(cls, session: AsyncSession, 
+                    search_term: Optional[str] = None,
+                    role: Optional[UserRole] = None,
+                    is_locked: Optional[bool] = None,
+                    is_verified: Optional[bool] = None,
+                    registration_start: Optional[datetime] = None,
+                    registration_end: Optional[datetime] = None) -> List["User"]:
+        """
+        Search for users based on various criteria
+        """
+        query = select(cls)
+
+        # Apply search term filter
+        if search_term:
+            search_filter = or_(
+                cls.email.ilike(f"%{search_term}%"),
+                cls.nickname.ilike(f"%{search_term}%"),
+                cls.first_name.ilike(f"%{search_term}%"),
+                cls.last_name.ilike(f"%{search_term}%")
+            )
+            query = query.where(search_filter)
+
+        # Apply role filter
+        if role:
+            query = query.where(cls.role == role)
+
+        # Apply account status filters
+        if is_locked is not None:
+            query = query.where(cls.is_locked == is_locked)
+        
+        if is_verified is not None:
+            query = query.where(cls.email_verified == is_verified)
+
+        # Apply registration date range filters
+        if registration_start:
+            query = query.where(cls.created_at >= registration_start)
+        if registration_end:
+            query = query.where(cls.created_at <= registration_end)
+
+        result = await session.execute(query)
+        return result.scalars().all()
