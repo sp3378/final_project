@@ -5,7 +5,7 @@ This document details my contributions to the User Management System project, in
 
 ## Quality Assurance Issues Resolved 🐞
 
-### 1. Password Validation Enhancement (#Issue-001)
+### 1. Password Validation Enhancement ([#Issue-01](https://github.com/sp3378/final_project/issues/1))
 **Problem**: Insufficient password validation during user registration.
 **Solution**: Implemented comprehensive password validation logic.
 **Implementation Details**:
@@ -15,7 +15,7 @@ This document details my contributions to the User Management System project, in
 - Implemented validation in user schema
 - Added error messages for each validation failure
 
-### 2. Strong Password Compliance (#Issue-002)
+### 2. Strong Password Compliance ([#Issue-03](https://github.com/sp3378/final_project/issues/3))
 **Problem**: Non-compliant passwords being accepted during registration.
 **Solution**: Enhanced password validation mechanism.
 **Technical Details**:
@@ -25,7 +25,7 @@ This document details my contributions to the User Management System project, in
 - Updated API documentation
 - Added validation bypass for testing environments
 
-### 3. Professional Status Update Fix (#Issue-003)
+### 3. Professional Status Update Fix ([#Issue-05](https://github.com/sp3378/final_project/issues/5))
 **Problem**: is_professional field updates failing in PUT /USER API.
 **Solution**: Schema and API endpoint updates.
 **Implementation**:
@@ -35,7 +35,7 @@ This document details my contributions to the User Management System project, in
 - Added timestamp tracking for status changes
 - Implemented proper validation
 
-### 4. Admin Email Verification Issue (#Issue-004)
+### 4. Admin Email Verification Issue ([#Issue-08](https://github.com/sp3378/final_project/issues/8))
 **Problem**: Incorrect admin role handling during email verification.
 **Solution**: Modified admin user flow.
 **Changes Made**:
@@ -45,7 +45,7 @@ This document details my contributions to the User Management System project, in
 - Added admin-specific verification checks
 - Enhanced role management system
 
-### 5. Email Verification Link Fix (#Issue-005)
+### 5. Email Verification Link Fix ([#Issue-010](https://github.com/sp3378/final_project/issues/10))
 **Problem**: Non-functional email verification links.
 **Solution**: Comprehensive email verification system update.
 **Technical Implementation**:
@@ -55,7 +55,7 @@ This document details my contributions to the User Management System project, in
 - Improved email template
 - Added verification status tracking
 
-### 6. Docker Workflow Enhancement (#Issue-006)
+### 6. Docker Workflow Enhancement ([#Issue-012](https://github.com/sp3378/final_project/issues/12))
 **Problem**: Outdated Docker workflow configuration.
 **Solution**: Modernized Docker setup.
 **Improvements**:
@@ -146,7 +146,8 @@ Implemented a comprehensive search and filtering system for user management.
 - Documented API usage
 
 ## Docker Repository
-[Docker Repository Link to be added]
+([#Link](https://hub.docker.com/r/saisrinivas194/final_project/tags))
+![Alt text](https://github.com/sp3378/final_project/blob/add-new-tests-and-new-feature/images/docker.png)
 
 ## Learning Outcomes 📚
 - Advanced understanding of FastAPI
