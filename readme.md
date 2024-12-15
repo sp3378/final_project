@@ -150,14 +150,28 @@ Implemented a comprehensive search and filtering system for user management.
 ![Alt text](https://github.com/sp3378/final_project/blob/add-new-tests-and-new-feature/images/docker.png)
 
 ## Learning Outcomes 📚
-- Advanced understanding of FastAPI
-- Test-driven development practices
-- Docker containerization
-- CI/CD implementation
-- API security best practices
-- Database optimization techniques
-- HATEOAS implementation
-- Agile development methodology
+- Advanced Understanding of FastAPI
+Mastered the creation of robust and scalable APIs using FastAPI, enhancing knowledge of asynchronous programming and web frameworks.
+- Test-Driven Development Practices
+Gained hands-on experience in writing unit tests and integration tests to ensure application reliability and maintainability.
+- Docker Containerization
+Developed a strong grasp of Docker to containerize applications, streamline development, and improve deployment workflows.
+- CI/CD Implementation
+Implemented continuous integration and continuous deployment pipelines, enabling automated testing, building, and deployment processes.
+- API Security Best Practices
+Learned and applied advanced techniques to secure APIs, including authentication, authorization, and data validation strategies.
+- Database Optimization Techniques
+Acquired skills in optimizing database queries and schemas to improve application performance and scalability.
+- HATEOAS Implementation
+Explored and implemented Hypermedia as the Engine of Application State (HATEOAS) to create self-descriptive and navigable APIs.
+- Agile Development Methodology
+Experienced Agile principles such as iterative development, sprint planning, and team collaboration to manage projects effectively.
+- QA and Testing Problem-Solving Skills
+Enhanced abilities to identify, analyze, and resolve quality assurance issues through structured testing approaches and debugging techniques.
+- Comprehensive Python Proficiency
+Strengthened Python coding skills, including building practical tools like calculators, working on complex projects, and implementing reusable components.
+- Integrated Technology Workflows
+Mastered the integration of tools and technologies like Docker, VS Code, Git repositories, and Python to create cohesive and efficient workflows for web systems development.
 
 ## Future Enhancements 🚀
 - ElasticSearch integration
