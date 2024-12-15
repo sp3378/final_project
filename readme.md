@@ -1,5 +1,3 @@
-
-
 # The User Management System Final Project: 
 
 # Project Reflection and Implementation Documentation 🚀

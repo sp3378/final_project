@@ -24,6 +24,7 @@ RUN apt-get update \
 
 # Copy Python packages and application code
 COPY --from=base /usr/local/lib/python3.12/site-packages/ /usr/local/lib/python3.12/site-packages/
+COPY --from=base /usr/local/bin/ /usr/local/bin/
 COPY . .
 
 # Set environment variables
@@ -31,5 +32,5 @@ ENV PYTHONPATH=/myapp
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Command to run the application
-CMD ["uvicorn", "myapp.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Use python -m to run uvicorn
+CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
