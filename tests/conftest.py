@@ -31,7 +31,7 @@ from faker import Faker
 from app.main import app
 from app.database import Base, Database
 from app.models.user_model import User, UserRole
-from app.dependencies import get_db, get_settings
+from app.dependencies import get_db, get_settings, get_email_service
 from app.utils.security import hash_password
 from app.utils.template_manager import TemplateManager
 from app.services.email_service import EmailService
@@ -48,17 +48,21 @@ AsyncSessionScoped = scoped_session(AsyncTestingSessionLocal)
 
 @pytest.fixture
 def email_service():
-    # Assuming the TemplateManager does not need any arguments for initialization
-    template_manager = TemplateManager()
-    email_service = EmailService(template_manager=template_manager)
-    return email_service
+    """Mock email service for tests"""
+    mock_service = AsyncMock()
+    # Mock the send_verification_email method
+    mock_service.send_verification_email = AsyncMock(return_value=None)
+    # Mock the send_user_email method
+    mock_service.send_user_email = AsyncMock(return_value=None)
+    return mock_service
 
 
 # this is what creates the http client for your api tests
 @pytest.fixture(scope="function")
-async def async_client(db_session):
+async def async_client(db_session, email_service):
     async with AsyncClient(app=app, base_url="http://testserver") as client:
         app.dependency_overrides[get_db] = lambda: db_session
+        app.dependency_overrides[get_email_service] = lambda: email_service
         try:
             yield client
         finally:
@@ -163,12 +167,12 @@ async def unverified_user(db_session):
 @pytest.fixture(scope="function")
 async def users_with_same_role_50_users(db_session):
     users = []
-    for _ in range(50):
+    for i in range(50):
         user_data = {
-            "nickname": fake.user_name(),
+            "nickname": f"test_user_{i}",
             "first_name": fake.first_name(),
             "last_name": fake.last_name(),
-            "email": fake.email(),
+            "email": f"test{i}@example.com",
             "hashed_password": fake.password(),
             "role": UserRole.AUTHENTICATED,
             "email_verified": False,
@@ -226,15 +230,3 @@ def manager_token(manager_user):
 def user_token(user):
     token_data = {"sub": str(user.id), "role": user.role.name}
     return create_access_token(data=token_data, expires_delta=timedelta(minutes=30))
-
-@pytest.fixture
-def email_service():
-    if settings.send_real_mail == 'true':
-        # Return the real email service when specifically testing email functionality
-        return EmailService()
-    else:
-        # Otherwise, use a mock to prevent actual email sending
-        mock_service = AsyncMock(spec=EmailService)
-        mock_service.send_verification_email.return_value = None
-        mock_service.send_user_email.return_value = None
-        return mock_service

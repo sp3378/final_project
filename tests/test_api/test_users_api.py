@@ -190,3 +190,93 @@ async def test_list_users_unauthorized(async_client, user_token):
         headers={"Authorization": f"Bearer {user_token}"}
     )
     assert response.status_code == 403  # Forbidden, as expected for regular user
+
+@pytest.mark.asyncio
+async def test_register_user_with_special_characters_in_name(async_client, email_service):
+    """Test user registration with special characters in name fields"""
+    user_data = {
+        "email": "test.special@example.com",
+        "password": "ValidPass123!",
+        "first_name": "John-Café",
+        "last_name": "O'Connor",
+        "role": "AUTHENTICATED"
+    }
+    response = await async_client.post("/register/", json=user_data)
+    assert response.status_code == 200
+    assert response.json()["first_name"] == user_data["first_name"]
+    assert response.json()["last_name"] == user_data["last_name"]
+    # Verify that send_verification_email was called
+    assert email_service.send_verification_email.called
+
+@pytest.mark.asyncio
+async def test_register_user_with_very_long_bio(async_client, email_service):
+    """Test user registration with a bio at the maximum length"""
+    long_bio = "A" * 500  # Maximum allowed length
+    user_data = {
+        "email": "long.bio@example.com",
+        "password": "ValidPass123!",
+        "bio": long_bio,
+        "role": "AUTHENTICATED"
+    }
+    response = await async_client.post("/register/", json=user_data)
+    assert response.status_code == 200
+    assert len(response.json()["bio"]) == 500
+    # Verify that send_verification_email was called
+    assert email_service.send_verification_email.called
+
+@pytest.mark.asyncio
+async def test_update_user_with_empty_optional_fields(async_client, admin_user, admin_token):
+    """Test updating user with empty optional fields"""
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    update_data = {
+        "role": "AUTHENTICATED",  # Required field
+        "email": admin_user.email,  # Required field
+        "first_name": None,
+        "last_name": None,
+        "bio": None,
+        "profile_picture_url": None,
+        "linkedin_profile_url": None,
+        "github_profile_url": None
+    }
+    response = await async_client.put(f"/users/{admin_user.id}", json=update_data, headers=headers)
+    assert response.status_code == 200
+    assert response.json()["first_name"] is None
+    assert response.json()["last_name"] is None
+    assert response.json()["bio"] is None
+
+@pytest.mark.asyncio
+async def test_consecutive_failed_login_attempts(async_client, verified_user):
+    """Test account locking after multiple failed login attempts"""
+    form_data = {
+        "username": verified_user.email,
+        "password": "WrongPassword123!"
+    }
+    
+    # Attempt login multiple times with wrong password
+    for _ in range(3):  # Assuming max_login_attempts is 3
+        response = await async_client.post(
+            "/login/",
+            data={"username": form_data["username"], "password": form_data["password"]},
+            headers={"Content-Type": "application/x-www-form-urlencoded"}
+        )
+    
+    # Try one more time to verify account is locked
+    final_response = await async_client.post(
+        "/login/",
+        data={"username": form_data["username"], "password": "MySuperPassword$1234"},
+        headers={"Content-Type": "application/x-www-form-urlencoded"}
+    )
+    assert final_response.status_code == 400
+    assert "Account locked" in final_response.json()["detail"]
+
+@pytest.mark.asyncio
+async def test_update_user_with_invalid_urls(async_client, admin_user, admin_token):
+    """Test updating user with invalid URL formats"""
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    update_data = {
+        "profile_picture_url": "invalid-url",
+        "linkedin_profile_url": "not-a-url",
+        "github_profile_url": "missing-protocol"
+    }
+    response = await async_client.put(f"/users/{admin_user.id}", json=update_data, headers=headers)
+    assert response.status_code == 422  # Validation error

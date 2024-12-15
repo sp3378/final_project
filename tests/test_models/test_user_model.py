@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.user_model import User, UserRole
+from sqlalchemy import event
 
 @pytest.mark.asyncio
 async def test_user_role(db_session: AsyncSession, user: User, admin_user: User, manager_user: User):
@@ -139,3 +140,80 @@ async def test_update_user_role(db_session: AsyncSession, user: User):
     await db_session.commit()
     await db_session.refresh(user)
     assert user.role == UserRole.ADMIN, "Role update should persist correctly in the database"
+
+@pytest.mark.asyncio
+async def test_user_nickname_uniqueness(db_session):
+    """Test that users cannot have duplicate nicknames"""
+    nickname = "unique_nickname"
+    
+    # Create first user
+    user1 = User(
+        nickname=nickname,
+        email="user1@example.com",
+        hashed_password="password",
+        role=UserRole.AUTHENTICATED
+    )
+    db_session.add(user1)
+    await db_session.commit()
+    
+    # Try to create second user with same nickname
+    user2 = User(
+        nickname=nickname,
+        email="user2@example.com",
+        hashed_password="password",
+        role=UserRole.AUTHENTICATED
+    )
+    db_session.add(user2)
+    with pytest.raises(Exception):  # Should raise an integrity error
+        await db_session.commit()
+
+@pytest.mark.asyncio
+async def test_user_role_transition(db_session, user):
+    """Test transitioning user through different roles"""
+    # Start as ANONYMOUS
+    user.role = UserRole.ANONYMOUS
+    await db_session.commit()
+    assert user.role == UserRole.ANONYMOUS
+    
+    # Upgrade to AUTHENTICATED
+    user.role = UserRole.AUTHENTICATED
+    await db_session.commit()
+    assert user.role == UserRole.AUTHENTICATED
+    
+    # Upgrade to MANAGER
+    user.role = UserRole.MANAGER
+    await db_session.commit()
+    assert user.role == UserRole.MANAGER
+
+@pytest.mark.asyncio
+async def test_professional_status_timestamp(db_session, user):
+    """Test that professional status updates timestamp"""
+    # Update the professional status using the update method
+    user.update_professional_status(True)
+    await db_session.commit()
+    
+    # Refresh the user to get the updated timestamp
+    await db_session.refresh(user)
+    
+    # Assert that the timestamp exists and is recent
+    assert user.professional_status_updated_at is not None
+    assert user.is_professional is True
+
+@pytest.mark.asyncio
+async def test_user_model_defaults(db_session):
+    """Test default values when creating a new user"""
+    user = User(
+        nickname="test_defaults",
+        email="defaults@example.com",
+        hashed_password="password",
+        role=UserRole.AUTHENTICATED
+    )
+    db_session.add(user)
+    await db_session.commit()
+    
+    assert user.failed_login_attempts == 0
+    assert user.is_locked is False
+    assert user.is_professional is False
+    assert user.email_verified is False
+    assert user.created_at is not None
+    assert user.updated_at is not None
