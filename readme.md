@@ -183,6 +183,6 @@ Mastered the integration of tools and technologies like Docker, VS Code, Git rep
 - Additional search capabilities
 
 ## Documentaion
-([#DocLink]([https://hub.docker.com/r/saisrinivas194/final_project/tags](https://github.com/sp3378/final_project/blob/main/IS601-User%20Management%20System.docx)))
+([#DocLink](https://hub.docker.com/r/saisrinivas194/final_project/tags](https://github.com/sp3378/final_project/blob/main/IS601-User%20Management%20System.docx))
 
 This project has significantly enhanced my understanding of professional software development practices and modern web application architecture. The implementation of these features and fixes has provided valuable experience in handling real-world development challenges.
